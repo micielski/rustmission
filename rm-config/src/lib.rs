@@ -1,5 +1,3 @@
-mod color;
-
 use std::{
     fs::File,
     io::{Read, Write},
@@ -8,10 +6,14 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
-use color::Color;
+use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use toml::Table;
 use xdg::BaseDirectories;
+
+const DEFAULT_CONFIG: &str = include_str!("../defaults/config.toml");
+static XDG_DIRS: OnceLock<BaseDirectories> = OnceLock::new();
+static CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -23,10 +25,14 @@ pub struct Config {
 pub struct General {
     #[serde(default)]
     pub auto_hide: bool,
-    #[serde(default, with = "color")]
+    #[serde(default = "default_color")]
     pub accent_color: Color,
     #[serde(default = "default_beginner_mode")]
     pub beginner_mode: bool,
+}
+
+fn default_color() -> Color {
+    Color::LightMagenta
 }
 
 fn default_beginner_mode() -> bool {
@@ -39,10 +45,6 @@ pub struct Connection {
     pub password: Option<String>,
     pub url: String,
 }
-
-const DEFAULT_CONFIG: &str = include_str!("../defaults/config.toml");
-static XDG_DIRS: OnceLock<BaseDirectories> = OnceLock::new();
-static CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 impl Config {
     pub fn init() -> Result<Self> {
